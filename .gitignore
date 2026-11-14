@@ -1,0 +1,28 @@
+# 备份 / 暂存：这类文件不该进仓库（曾发生过 .bak 被提交进历史）
+*.bak
+*.bak-*
+*.orig
+*.old
+*~
+*.copy
+*.rej
+副本*
+*.save
+
+# 本地暂存区与回滚点
+_trash/
+.deleted/
+_backup/
+
+# Python / 工具副产物
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+.obsidian/workspace*

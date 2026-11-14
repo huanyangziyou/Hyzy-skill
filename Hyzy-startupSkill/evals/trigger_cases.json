@@ -1,0 +1,32 @@
+{
+  "note": "本库真实语料；改动 Hyzy-startupSkill 的 description 后逐条复核",
+  "should_trigger": [
+    {"text": "帮我把每周整理会议结论的流程做成一个本地用的 skill", "family": "cn_create_local"},
+    {"text": "把这套 SOP 和脚本封装成可复用的 skill", "family": "cn_create_from_sop"},
+    {"text": "借鉴 jc-meta-skill，规划如何优化 skill：Hyzy-startupSkill", "family": "cn_plan_optimize_existing"},
+    {"text": "优化这个已有 skill，补齐停止条件、失败处理和触发样例", "family": "cn_improve_existing"},
+    {"text": "审计这个 skill 的目录结构和提示词，先不要改文件", "family": "cn_audit_readonly"},
+    {"text": "帮我设计这个 skill 的文件分层，哪些放 references、哪些放 scripts", "family": "cn_architecture"},
+    {"text": "给这个 skill 补应触发、不应触发和近邻案例", "family": "cn_trigger_cases"},
+    {"text": "重写这个 skill 的行为提示词，写清约束分级和验收标准", "family": "cn_prompt_design"},
+    {"text": "把这个 skill 从旧格式迁移成新的可安装结构", "family": "cn_migrate_refactor"},
+    {"text": "Create a local agent skill from this repeated workflow.", "family": "en_create"}
+  ],
+  "should_not_trigger": [
+    {"text": "解释一下什么是 agent skill，不要做成 skill", "family": "explain_only"},
+    {"text": "把这篇文章翻译一下", "family": "translate_only"},
+    {"text": "帮我总结这份笔记，三条要点就行", "family": "summary_only"},
+    {"text": "把这个普通 Python 包发布到 PyPI", "family": "non_skill_package"},
+    {"text": "把这段内容写成一份 Word 报告", "family": "ordinary_doc"}
+  ],
+  "near_neighbor": [
+    {"text": "帮我看一下这个 README 顺不顺，不要做成 skill", "family": "readme_review"},
+    {"text": "头脑风暴几个 skill 名字，先不要打包", "family": "brainstorm_only"},
+    {"text": "盘点一下 skill 库有没有重复和空壳目录", "family": "library_governance"},
+    {"text": "给我写一段通用系统提示词，不需要做成 skill", "family": "prompt_only"}
+  ],
+  "permission_cases": [
+    {"text": "先规划暂不执行", "expected": "只读，零写入"},
+    {"text": "备份原有的版本，然后修改", "expected": "先备份到库外，覆盖前已取得确认"}
+  ]
+}
