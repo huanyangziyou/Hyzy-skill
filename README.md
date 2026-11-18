@@ -399,7 +399,7 @@ T0–T3 已按授权执行完毕。**改动全部未提交**——提交与推�
 1. `references/pipeline.md` 的 Stage 5/6 命令模板原写 `--base "<库根>/01-概念笔记"`（4 处）。按 `env-adapt.md` 的定义 `<库根>` 本身就是概念笔记库根，再拼一层会指向不存在的目录——真跑会失败。已改为 `--base "<库根>"`。
 2. `PDFtomdnotemap/references/env-adapt.md` §五 原写「`case-fusion-6books.md` 里写的 `3-0_book_all`」，但案例文件抽象化后早已不含该词，属悬空说明。已改为记录本机素材目录改名事实。
 
-> 删除的 `.bak-20261011` 三重可恢复：git 历史（commit `cf6e02e`）、备份包 `hyzy-skills-preopt-20261112-2218.tar.gz`、暂存区 `_backup/_trash-20261112-2240/`。未做物理销毁。
+> 删除的 `.bak-20261011` 两重可恢复：备份包 `hyzy-skills-preopt-20261112-2218.tar.gz`、暂存区 `_backup/_trash-20261112-2240/`。未做物理销毁。旧 git 提交在仓库基线重建时已移除，不再作为恢复源。
 
 ### 5.4 与 `INTERNAL-CONTENT-AUDIT.md` 的分工
 

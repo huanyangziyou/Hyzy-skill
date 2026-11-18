@@ -32,12 +32,12 @@ S="$SKILL/scripts"
 - 若用户提供的是图片文件而非剪贴板，直接按语义重命名 `copy` 即可。
 
 ## 非图片附件（zip / .skill / 模板等）
-复制体若附带非图片附件（如 LLM-Wiki 启动包 `.zip`、工作台 `.skill`），统一落 **`./attachments/`**（与 `images/` 同级），并在正文用相对路径引用：
+复制体若附带非图片附件（如 `示例启动包.zip`、工作台 `.skill`），统一落 **`./attachments/`**（与 `images/` 同级），并在正文用相对路径引用：
 ```markdown
-配套压缩包见 [attachments/LLM-Wiki启动包.zip](./attachments/LLM-Wiki启动包.zip)
+配套压缩包见 [attachments/示例启动包.zip](./attachments/示例启动包.zip)
 ```
 - 附件不进 `images/`，避免与图片混用。
-- 若附件与 md 必须在同级目录（如 `.skill` 需与 `images/` 同级），则放 **同名文件夹**（如 `xindao-personal-workbench/xindao-personal-workbench.skill`），不混入 images。
+- 若附件与 md 必须在同级目录（如 `.skill` 需与 `images/` 同级），则放 **同名文件夹**（如 `<工作包名>/<工作包名>.skill`），不混入 images。
 
 ## 远程图（HTML 场景）
 ```bash
