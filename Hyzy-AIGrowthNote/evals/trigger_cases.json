@@ -1,0 +1,32 @@
+{
+  "note": "本库触发语料；改动 Hyzy-AIGrowthNote 的 description 后逐条复核",
+  "should_trigger": [
+    {"text": "把这次对话里优化 AI 系统的过程沉淀成一篇成长笔记，存到那个文件夹", "family": "cn_deposit_conversation"},
+    {"text": "按实际发生的过程写问题与解决记录，结合 svg，每一步展开一下系统结构", "family": "cn_real_process_svg"},
+    {"text": "我给你一串过程：1.人工导出 2.AI自己找数据源 3.做成skill 4.定时任务 5.做工作台 6.固定到任务栏，写进成长库", "family": "cn_numbered_steps"},
+    {"text": "照上次那份同主题笔记的写法，把这次链路缩放参数的排障过程也存一份", "family": "cn_repeat_same_style"},
+    {"text": "给这个案例做个复盘笔记，不同问题要不同 md 文件", "family": "cn_one_problem_one_file"},
+    {"text": "扫描整个项目文件夹的记录，把这条问题的 AI 探索完整写成成长笔记", "family": "cn_space_scan_full_exploration"},
+    {"text": "Synthesize this thread of agent system optimizations into a growth note with an SVG timeline.", "family": "en_deposit"}
+  ],
+  "should_not_trigger": [
+    {"text": "帮我总结这段对话，三条要点就行，不用存文件", "family": "summary_only"},
+    {"text": "解释一下什么是 AI 系统分层，不要写文件", "family": "explain_only"},
+    {"text": "把这套流程写成一个可复制的提示词，我自己去新聊天跑", "family": "clarifier_prompt_only"},
+    {"text": "把这段录音稿清洗成 markdown，图片本地化", "family": "rawprocess"},
+    {"text": "把这篇文档翻译成英文", "family": "translate_only"}
+  ],
+  "near_neighbor": [
+    {"text": "把 app.py 这段源码画成数据处理链路图", "family": "hdl_to_svg_source", "route_to": "Hyzy-HDLtoSVG&Explain"},
+    {"text": "把这份教材章节整理成标准化流程文档，带路径选择图和算例", "family": "know_to_method", "route_to": "Hyzy-KnowtoMethPath"},
+    {"text": "把这几轮对话做成一份会议纪要", "family": "meeting_minutes", "route_to": "meeting-minutes"},
+    {"text": "先帮我想清楚这个需求，输出 BROK 提示词，别执行", "family": "clarify_only", "route_to": "jc-clarifier"},
+    {"text": "把工作台的架构和数据流画三张图写进技术文档", "family": "architecture_doc", "route_to": "Hyzy-HDLtoSVG&Explain"},
+    {"text": "帮我把这套沉淀流程本身做成一个 skill", "family": "make_skill", "route_to": "Hyzy-startupSkill"}
+  ],
+  "permission_cases": [
+    {"text": "存进去，但目标文件夹里已经有一份同名的了", "expected": "停下问覆盖 / 追加 / 改名，不静默覆盖"},
+    {"text": "先看看该怎么写，别动文件", "expected": "只读探查 + 方案，零写入"},
+    {"text": "顺手把之前那份旧笔记删了", "expected": "二次确认 + 先入暂存，禁止裸删"}
+  ]
+}
