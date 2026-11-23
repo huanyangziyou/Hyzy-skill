@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<!--
+  通用理解物工作台 · 模板（v3 可编辑知识门户）
+  用法：放在理解物同目录，旁边放 manifest.js（由 register_workbench.py 生成）。
+  零外链、零外发、双击即用。索引来自 window.WORKBENCH_MANIFEST（只读基线）。
+  三层状态：基线 manifest.js + 本机覆盖层 localStorage + 手动导入项 localStorage。
+  界面里的一切编辑只写本机层，不回写 manifest.js；导出配置/清单才生成可替换文件。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>理解物工作台</title>
+<style>
+  :root{
+    --bg:#f6f7f9;--surface:#fff;--ink:#22252a;--muted:#6b7280;--line:#e5e7eb;
+    --accent:#2563a6;--soft:#eef4fb;--teal:#e4f4ee;--amber:#fbf0dc;--danger:#b91c1c
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+    line-height:1.6;font-size:14px}
+  .wrap{max-width:1060px;margin:0 auto;padding:36px 24px 64px}
+  header h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  header .sub{color:var(--muted);margin:0 0 24px;font-size:13px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 16px}
+  .stat .n{font-size:22px;font-weight:600;color:var(--accent)}
+  .stat .l{font-size:12px;color:var(--muted)}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .tools input[type=search]{flex:1;min-width:200px;background:var(--surface);
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit}
+  button{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    padding:7px 12px;font-size:13px;color:var(--accent);cursor:pointer;font-family:inherit}
+  button:hover{background:var(--soft)}
+  button.danger{color:var(--danger);background:#fef2f2;border-color:#fecaca}
+  button.danger:hover{background:#fee2e2}
+  button.dim{color:var(--muted)}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+  .grid.compact{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:17px 19px;display:flex;flex-direction:column;gap:9px}
+  .grid.compact .card{padding:12px 14px;gap:6px}
+  .card h2{font-size:15px;font-weight:600;margin:0}
+  .tag{align-self:flex-start;font-size:11px;padding:2px 9px;border-radius:999px;font-weight:500}
+  .desc{color:var(--muted);font-size:13px;margin:0;flex:1}
+  .meta{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:9px}
+  .acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .open{color:var(--accent);text-decoration:none;font-size:13px;font-weight:500;cursor:pointer}
+  .open:hover{text-decoration:underline}
+  .mini{font-size:11px;padding:2px 8px;border-radius:6px;color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted);margin:0 0 16px}
+  .empty{color:var(--muted);font-size:13px;padding:24px 4px}
+  details.mgmt{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    margin:0 0 18px;padding:0 16px}
+  details.mgmt>summary{cursor:pointer;padding:12px 0;font-size:13px;color:var(--accent);font-weight:500}
+  .mgmt-body{padding:4px 0 16px;border-top:1px solid var(--line)}
+  .sec{margin:14px 0 6px;font-size:12px;font-weight:600;color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+  .row input,.row select,.row textarea{font-family:inherit;font-size:12px;padding:5px 8px;
+    border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+  .row input[type=text]{min-width:120px}
+  .topic-row{display:flex;gap:8px;align-items:center;margin:5px 0;padding:5px 8px;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+  .swatch{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
+  .topic-row .nm{flex:1}
+  label.fld{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+  label.fld input,label.fld textarea,label.fld select{font-family:inherit;font-size:13px;padding:7px 9px;
+    border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+  label.fld textarea{min-height:64px;resize:vertical}
+  .modal[hidden]{display:none!important}
+  .modal{position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;
+    align-items:center;justify-content:center;padding:20px;z-index:9}
+  .modal-box{background:var(--surface);border-radius:14px;padding:22px;width:min(460px,100%);
+    box-shadow:0 18px 50px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:11px}
+  .modal-box h3{margin:0;font-size:16px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:12px}
+  @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="pageTitle">理解物工作台</h1>
+    <p class="sub" id="pageSub">本地聚合与导航层。清单由生成侧自动登记，也可手动导入文件/目录补充；正文各自离线可读，本页只负责找到它们。</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="sTotal">0</div><div class="l">理解物文件</div></div>
+    <div class="stat"><div class="n" id="sTopic">0</div><div class="l">主题分类</div></div>
+    <div class="stat"><div class="n" id="sAuto">0</div><div class="l">自动登记</div></div>
+    <div class="stat"><div class="n" id="sManual">0</div><div class="l">手动导入</div></div>
+  </div>
+
+  <div class="tools">
+    <input type="search" id="q" placeholder="搜索标题或摘要…">
+    <button onclick="document.getElementById('fileInput').click()">导入文件</button>
+    <button onclick="document.getElementById('dirInput').click()">导入目录</button>
+    <button onclick="exportList()">导出清单</button>
+    <button onclick="restoreAll()">恢复全部</button>
+    <input type="file" id="fileInput" multiple accept=".html,.htm" hidden>
+    <input type="file" id="dirInput" webkitdirectory directory hidden>
+  </div>
+
+  <details class="mgmt" id="mgmt">
+    <summary>管理与配置 · 主题 / 卡片 / 展示 / 导入导出 / 恢复默认</summary>
+    <div class="mgmt-body" id="mgmtBody"></div>
+  </details>
+
+  <p class="hint" id="hintText"></p>
+  <div class="bar" id="bar"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer id="footText"></footer>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box">
+    <h3 id="modalTitle">编辑卡片</h3>
+    <label class="fld">标题<input type="text" id="edTitle"></label>
+    <label class="fld">摘要<textarea id="edDesc"></textarea></label>
+    <label class="fld">元信息<input type="text" id="edMeta"></label>
+    <label class="fld">主题<select id="edTopic"></select></label>
+    <label class="fld" id="edFileWrap">链接文件<input type="text" id="edFile"></label>
+    <div class="modal-actions">
+      <button onclick="saveCardEdit()">保存</button>
+      <button class="dim" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="./manifest.js"></script>
+<script>
+/* ---------- 常量与本地存储（键名向后兼容旧版） ---------- */
+var MANIFEST = window.WORKBENCH_MANIFEST || [];
+var K_IMP = 'insight-workbench-imports-v1';
+var K_HID = 'insight-workbench-hidden-v1';
+var K_OVR = 'insight-workbench-overlay-v1';
+var K_TOP = 'insight-workbench-topics-v1';
+var K_SET = 'insight-workbench-settings-v1';
+var CONFIG_FORMAT = 'insight-workbench-config-v1';
+var PALETTE = [
+  {bg:'#eef4fb',fg:'#2563a6'},{bg:'#e4f4ee',fg:'#0f7a52'},
+  {bg:'#fbf0dc',fg:'#9a6700'},{bg:'#f3e8ff',fg:'#7c3aed'},
+  {bg:'#ffe4e6',fg:'#be123c'},{bg:'#e0f2fe',fg:'#0369a1'}
+];
+var DEF_SET = {sort:'default',density:'normal',defaultFilter:'all',showMeta:true,
+  pageTitle:'理解物工作台',pageSub:'本地聚合与导航层。清单由生成侧自动登记，也可手动导入文件/目录补充；正文各自离线可读，本页只负责找到它们。'};
+
+function loadKey(k, def){
+  try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; }
+  catch(e){ return def; }
+}
+function saveKey(k, v){
+  try { localStorage.setItem(k, JSON.stringify(v)); }
+  catch(e){ alert('本地存储写入失败：' + e.message); }
+}
+
+var imports = loadKey(K_IMP, []);
+var hidden  = loadKey(K_HID, []);
+var overlay = loadKey(K_OVR, {});
+var topics  = loadKey(K_TOP, null);
+var settings;
+(function(){
+  var s = loadKey(K_SET, {});
+  settings = {};
+  for (var p in DEF_SET){ settings[p] = (s[p] !== undefined) ? s[p] : DEF_SET[p]; }
+})();
+var filter = 'all', query = '', editingIndex = -1;
+
+function saveAll(){
+  saveKey(K_IMP, imports); saveKey(K_HID, hidden); saveKey(K_OVR, overlay);
+  saveKey(K_TOP, topics); saveKey(K_SET, settings);
+}
+
+/* ---------- 工具 ---------- */
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function topicOf(x){ return x.topicLabel || '未分类'; }
+function initTopics(){
+  var names = [];
+  MANIFEST.concat(imports).forEach(function(x){ var t = topicOf(x); if (names.indexOf(t) < 0) names.push(t); });
+  if (names.indexOf('未分类') < 0) names.push('未分类');
+  return names.map(function(n,i){ return {name:n, color:i % PALETTE.length}; });
+}
+if (!Array.isArray(topics) || !topics.length){ topics = initTopics(); saveKey(K_TOP, topics); }
+function colorOf(name){
+  for (var i=0;i<topics.length;i++){ if (topics[i].name === name){
+    var c = PALETTE[((topics[i].color|0) % PALETTE.length + PALETTE.length) % PALETTE.length];
+    return c;
+  }}
+  return PALETTE[PALETTE.length-1];
+}
+function topicNames(){ return topics.map(function(t){ return t.name; }); }
+
+/* ---------- 三层状态：原始条目 / 视图 / 稳定键 ---------- */
+function rawAt(i){ return i < MANIFEST.length ? MANIFEST[i] : imports[i - MANIFEST.length]; }
+function keyAt(i){
+  var x = rawAt(i);
+  return i < MANIFEST.length ? ('@auto:' + (x.file || x.title)) : ('@imp:' + (x.name || x.title));
+}
+function viewAt(i){
+  var raw = rawAt(i);
+  if (i < MANIFEST.length && overlay[keyAt(i)]){
+    var v = {}; for (var p in raw) v[p] = raw[p];
+    var o = overlay[keyAt(i)]; for (var p in o) v[p] = o[p];
+    return v;
+  }
+  return raw;
+}
+function total(){ return MANIFEST.length + imports.length; }
+function isHiddenKey(k){ return hidden.indexOf(k) >= 0; }
+function visible(){
+  var out = [];
+  for (var i=0;i<total();i++){ if (!isHiddenKey(keyAt(i))) out.push({x:viewAt(i), i:i}); }
+  return out;
+}
+function save(){ saveKey(K_IMP, imports); }
+
+/* ---------- 统计与渲染 ---------- */
+function stats(){
+  document.getElementById('sTotal').textContent = visible().length;
+  document.getElementById('sTopic').textContent = topics.length;
+  document.getElementById('sAuto').textContent = MANIFEST.filter(function(x,i){return !isHiddenKey(keyAt(i));}).length;
+  document.getElementById('sManual').textContent = imports.filter(function(x,i){return !isHiddenKey('@imp:' + (x.name||x.title));}).length;
+}
+function applyChrome(){
+  document.title = settings.pageTitle || DEF_SET.pageTitle;
+  document.getElementById('pageTitle').textContent = settings.pageTitle || DEF_SET.pageTitle;
+  document.getElementById('pageSub').textContent = settings.pageSub || DEF_SET.pageSub;
+  document.getElementById('grid').className = 'grid' + (settings.density === 'compact' ? ' compact' : '');
+  document.getElementById('footText').textContent =
+    '纯本地运行：无外部请求、无数据外发。基线来自同目录 manifest.js；界面编辑只存本机浏览器 localStorage（不回写基线），可导出配置迁移。原始文件不会被删除。';
+  document.getElementById('hintText').textContent =
+    '所有卡片可编辑、可移除：编辑与移除只改本机视图，不删原文件。要永久生效，请导出清单替换 manifest.js；要迁移整套主题与布局，请导出配置。';
+}
+function renderBar(){
+  var html = '<button class="' + (filter==='all'?'on':'') + '" data-t="all">全部</button>';
+  topicNames().forEach(function(t){
+    html += '<button class="' + (filter===t?'on':'') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>';
+  });
+  document.getElementById('bar').innerHTML = html;
+}
+function sortItems(items){
+  if (settings.sort === 'titleAsc') return items.sort(function(a,b){ return (a.x.title||'').localeCompare(b.x.title||'', 'zh'); });
+  if (settings.sort === 'titleDesc') return items.sort(function(a,b){ return (b.x.title||'').localeCompare(a.x.title||'', 'zh'); });
+  return items;
+}
+function render(){
+  applyChrome(); stats(); renderBar(); renderMgmt();
+  var items = sortItems(visible().filter(function(o){
+    var okT = filter === 'all' || topicOf(o.x) === filter;
+    var hay = (o.x.title || '') + ' ' + (o.x.desc || '');
+    var okQ = !query || hay.toLowerCase().indexOf(query.toLowerCase()) >= 0;
+    return okT && okQ;
+  }));
+  var g = document.getElementById('grid');
+  if (!items.length){ g.innerHTML = '<div class="empty">没有匹配的理解物。可导入文件，或换个关键词。</div>'; return; }
+  g.innerHTML = items.map(function(o){
+    var x = o.x, c = colorOf(topicOf(x));
+    return '<div class="card">'
+      + '<span class="tag" style="background:' + c.bg + ';color:' + c.fg + '">' + esc(topicOf(x)) + '</span>'
+      + '<h2>' + esc(x.title) + '</h2>'
+      + '<p class="desc">' + esc(x.desc || '') + '</p>'
+      + (settings.showMeta ? '<div class="meta">' + esc(x.meta || '') + '</div>' : '')
+      + '<div class="acts">'
+      + '<span class="open" data-i="' + o.i + '">打开 ↗</span>'
+      + '<button class="mini" data-e="' + o.i + '">编辑</button>'
+      + '<button class="mini dim" data-d="' + o.i + '" title="只从本机视图移除，不删原文件">移除</button>'
+      + '</div></div>';
+  }).join('');
+}
+function openCard(i){
+  var x = viewAt(i);
+  if (x.content){
+    var blob = new Blob([x.content], {type:'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  } else {
+    window.open(x.file, '_blank');
+  }
+}
+function delItem(i){
+  var x = viewAt(i);
+  var isAuto = i < MANIFEST.length;
+  var msg = isAuto
+    ? '从工作台移除这一条？\n\n' + x.title + '\n\n仅在本机隐藏，不删除原文件；可用「恢复全部」还原。'
+    : '移除这条导入记录？\n\n' + x.title + '\n\n仅删除本机记录，不影响原始 HTML 文件。';
+  if (!confirm(msg)) return;
+  var k = keyAt(i);
+  if (isAuto){
+    if (hidden.indexOf(k) < 0) hidden.push(k);
+    saveKey(K_HID, hidden);
+  } else {
+    imports.splice(i - MANIFEST.length, 1);
+    if (hidden.indexOf(k) >= 0) hidden.splice(hidden.indexOf(k), 1);
+    saveAll();
+  }
+  render();
+}
+function restoreAll(){
+  if (!hidden.length) return;
+  if (!confirm('恢复全部被隐藏的自动登记条目？\n\n只重新显示条目，不改动任何文件或手动导入记录。')) return;
+  hidden = []; saveKey(K_HID, hidden); render();
+}
+
+/* ---------- 卡片编辑 ---------- */
+function openModal(i){
+  editingIndex = i;
+  var x = viewAt(i), t = topicOf(x);
+  document.getElementById('modalTitle').textContent = (i < MANIFEST.length ? '编辑卡片（本机覆盖）' : '编辑导入项（本机）');
+  document.getElementById('edTitle').value = x.title || '';
+  document.getElementById('edDesc').value = x.desc || '';
+  document.getElementById('edMeta').value = x.meta || '';
+  var sel = document.getElementById('edTopic');
+  var names = topicNames(); if (names.indexOf(t) < 0) names.push(t);
+  sel.innerHTML = names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+  sel.value = t;
+  document.getElementById('edFile').value = x.file || '';
+  document.getElementById('edFileWrap').style.display = (i < MANIFEST.length) ? '' : 'none';
+  document.getElementById('modal').hidden = false;
+}
+function closeModal(){ editingIndex = -1; document.getElementById('modal').hidden = true; }
+function saveCardEdit(){
+  if (editingIndex < 0) return;
+  var i = editingIndex;
+  var title = document.getElementById('edTitle').value.trim();
+  var desc = document.getElementById('edDesc').value.trim();
+  var meta = document.getElementById('edMeta').value.trim();
+  var topic = document.getElementById('edTopic').value;
+  if (!title){ alert('标题不能为空'); return; }
+  if (i < MANIFEST.length){
+    var k = keyAt(i);
+    overlay[k] = Object.assign({}, overlay[k] || {}, {
+      title:title, desc:desc, meta:meta, topicLabel:topic,
+      file:document.getElementById('edFile').value.trim() || MANIFEST[i].file
+    });
+    saveKey(K_OVR, overlay);
+  } else {
+    var it = imports[i - MANIFEST.length];
+    it.title = title; it.desc = desc; it.meta = meta; it.topicLabel = topic;
+    saveAll();
+  }
+  closeModal(); render();
+}
+
+/* ---------- 管理面板：主题 / 展示 / 配置 ---------- */
+function renderMgmt(){
+  var h = '';
+  h += '<div class="sec">主题管理（增删改名 / 改色 / 排序；删除主题时其卡片落入「未分类」）</div>';
+  topics.forEach(function(t, idx){
+    var c = colorOf(t.name);
+    h += '<div class="topic-row">'
+      + '<span class="swatch" style="background:' + c.bg + ';border-color:' + c.fg + '"></span>'
+      + '<input class="nm" type="text" data-tn="' + idx + '" value="' + esc(t.name) + '">'
+      + '<select data-tc="' + idx + '">'
+      + PALETTE.map(function(p,i){ return '<option value="' + i + '"' + ((t.color|0)===i?' selected':'') + '>色' + (i+1) + '</option>'; }).join('')
+      + '</select>'
+      + '<button class="mini dim" data-tu="' + idx + '" title="上移">↑</button>'
+      + '<button class="mini dim" data-td="' + idx + '" title="下移">↓</button>'
+      + '<button class="mini danger" data-tx="' + idx + '" title="删除主题">删</button>'
+      + '</div>';
+  });
+  h += '<div class="row"><input type="text" id="newTopic" placeholder="新主题名"><button onclick="addTopic()">新增主题</button></div>';
+
+  h += '<div class="sec">导入项排序（上移 / 下移；仅影响本机视图）</div>';
+  if (!imports.length){ h += '<div class="row" style="color:var(--muted);font-size:12px">暂无手动导入项</div>'; }
+  imports.forEach(function(it, idx){
+    h += '<div class="row"><span style="font-size:12px">' + esc(it.title || it.name) + '</span>'
+      + '<button class="mini dim" data-iu="' + idx + '">↑</button>'
+      + '<button class="mini dim" data-id="' + idx + '">↓</button></div>';
+  });
+
+  h += '<div class="sec">全局展示设置</div>';
+  h += '<div class="row">'
+    + '<label>排序 <select id="setSort">'
+    + '<option value="default"' + (settings.sort==='default'?' selected':'') + '>按清单</option>'
+    + '<option value="titleAsc"' + (settings.sort==='titleAsc'?' selected':'') + '>标题升序</option>'
+    + '<option value="titleDesc"' + (settings.sort==='titleDesc'?' selected':'') + '>标题降序</option>'
+    + '</select></label>'
+    + '<label>密度 <select id="setDensity">'
+    + '<option value="normal"' + (settings.density==='normal'?' selected':'') + '>正常</option>'
+    + '<option value="compact"' + (settings.density==='compact'?' selected':'') + '>紧凑</option>'
+    + '</select></label>'
+    + '<label>默认筛选 <select id="setFilter"><option value="all">全部</option>'
+    + topicNames().map(function(t){ return '<option value="' + esc(t) + '"' + (settings.defaultFilter===t?' selected':'') + '>' + esc(t) + '</option>'; }).join('')
+    + '</select></label>'
+    + '<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="setMeta"' + (settings.showMeta?' checked':'') + '>显示元信息</label>'
+    + '<button onclick="applySettings()">应用设置</button>'
+    + '</div>';
+  h += '<div class="row" style="font-size:12px;color:var(--muted)">页面标题与副标题也可改 → 导出配置里含这两项。</div>'
+    + '<div class="row"><input type="text" id="setTitle" value="' + esc(settings.pageTitle) + '" placeholder="页面标题">'
+    + '<input type="text" id="setSub" value="' + esc(settings.pageSub) + '" placeholder="页面副标题（长文本可导出配置改）" style="flex:1;min-width:180px"></div>'
+    + '<div class="row"><button onclick="applyChromeText()">更新标题/副标题</button></div>';
+
+  h += '<div class="sec">配置迁移（整套主题 + 覆盖 + 展示 + 导入项，可带到别的项目）</div>';
+  h += '<div class="row"><button onclick="exportConfig()">导出配置</button>'
+    + '<button onclick="document.getElementById(\'cfgInput\').click()">导入配置</button>'
+    + '<input type="file" id="cfgInput" accept=".json" hidden></div>';
+
+  h += '<div class="sec">恢复默认</div>';
+  h += '<div class="row"><button class="danger" onclick="resetOverlay()">清除本机编辑，回到清单基线</button>'
+    + '<button class="dim" onclick="clearImports()">清空导入</button></div>'
+    + '<div class="row" style="font-size:12px;color:var(--muted)">清除本机编辑只重置主题、卡片编辑与展示设置；隐藏项用「恢复全部」还原，手动导入项保留。</div>';
+
+  document.getElementById('mgmtBody').innerHTML = h;
+}
+function addTopic(){
+  var el = document.getElementById('newTopic'), name = (el.value||'').trim();
+  if (!name){ return; }
+  if (topicNames().indexOf(name) >= 0){ alert('主题已存在'); return; }
+  topics.push({name:name, color:topics.length % PALETTE.length});
+  saveKey(K_TOP, topics); render();
+}
+function retitleTopic(idx){
+  var el = document.querySelector('[data-tn="' + idx + '"]');
+  var old = topics[idx].name, name = (el.value||'').trim();
+  if (!name || name === old) return;
+  if (topicNames().indexOf(name) >= 0){ alert('主题名已存在'); return; }
+  topics[idx].name = name;
+  for (var i=0;i<MANIFEST.length;i++){
+    if (topicOf(viewAt(i)) === old){
+      var k = keyAt(i);
+      overlay[k] = Object.assign({}, overlay[k] || {}, {topicLabel:name});
+    }
+  }
+  imports.forEach(function(it){ if (topicOf(it) === old) it.topicLabel = name; });
+  if (filter === old) filter = name;
+  if (settings.defaultFilter === old) settings.defaultFilter = name;
+  saveAll(); render();
+}
+function delTopic(idx){
+  var name = topics[idx].name, n = 0;
+  for (var i=0;i<total();i++){ if (topicOf(viewAt(i)) === name) n++; }
+  if (!confirm('删除主题「' + name + '」？\n\n' + (n ? ('其下 ' + n + ' 张卡片将落入「未分类」，不会删除文件。') : '该主题下没有卡片。'))) return;
+  topics.splice(idx, 1);
+  for (var i=0;i<MANIFEST.length;i++){
+    if (topicOf(viewAt(i)) === name){
+      var k = keyAt(i);
+      var o = Object.assign({}, overlay[k] || {}, {topicLabel:'未分类'});
+      if (topicOf(rawAt(i)) !== '未分类') overlay[k] = o; else delete overlay[k].topicLabel;
+    }
+  }
+  imports.forEach(function(it){ if (topicOf(it) === name) it.topicLabel = '未分类'; });
+  if (filter === name) filter = 'all';
+  if (settings.defaultFilter === name) settings.defaultFilter = 'all';
+  saveAll(); render();
+}
+function moveTopic(idx, dir){
+  var j = idx + dir; if (j < 0 || j >= topics.length) return;
+  var t = topics[idx]; topics[idx] = topics[j]; topics[j] = t;
+  saveKey(K_TOP, topics); render();
+}
+function applySettings(){
+  settings.sort = document.getElementById('setSort').value;
+  settings.density = document.getElementById('setDensity').value;
+  settings.defaultFilter = document.getElementById('setFilter').value;
+  settings.showMeta = document.getElementById('setMeta').checked;
+  saveKey(K_SET, settings);
+  filter = settings.defaultFilter;
+  render();
+}
+function applyChromeText(){
+  settings.pageTitle = document.getElementById('setTitle').value.trim() || DEF_SET.pageTitle;
+  settings.pageSub = document.getElementById('setSub').value.trim();
+  saveKey(K_SET, settings); render();
+}
+
+/* ---------- 配置导入 / 导出 ---------- */
+function download(name, text, type){
+  var blob = new Blob([text], {type:type});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 60000);
+}
+function exportList(){
+  var out = visible().map(function(o){
+    var x = o.x;
+    return {file:x.file, title:x.title, desc:x.desc, meta:x.meta, topicLabel:topicOf(x)};
+  });
+  download('manifest.js', 'window.WORKBENCH_MANIFEST = ' + JSON.stringify(out,null,2) + ';\n',
+    'application/javascript;charset=utf-8');
+}
+function exportConfig(){
+  var cfg = {format:CONFIG_FORMAT, exportedAt:new Date().toISOString(),
+    topics:topics, settings:settings, overlay:overlay, imports:imports, hidden:hidden};
+  download('workbench-config.json', JSON.stringify(cfg, null, 2), 'application/json;charset=utf-8');
+}
+function importConfig(files){
+  var f = files && files[0]; if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    var cfg;
+    try { cfg = JSON.parse(String(r.result)); }
+    catch(e){ alert('配置解析失败：' + e.message); return; }
+    if (!cfg || cfg.format !== CONFIG_FORMAT){ alert('不是本工作台的配置格式'); return; }
+    if (!confirm('导入配置？\n\n将替换本机主题、卡片编辑、展示设置与隐藏项；导入项按文件名合并（同名以配置为准）。')) return;
+    if (Array.isArray(cfg.topics) && cfg.topics.length) topics = cfg.topics;
+    if (cfg.settings && typeof cfg.settings === 'object'){
+      for (var p in DEF_SET){ if (cfg.settings[p] !== undefined) settings[p] = cfg.settings[p]; }
+    }
+    if (cfg.overlay && typeof cfg.overlay === 'object') overlay = cfg.overlay;
+    if (Array.isArray(cfg.hidden)) hidden = cfg.hidden;
+    if (Array.isArray(cfg.imports)){
+      var byName = {};
+      imports.forEach(function(it){ byName[it.name] = it; });
+      cfg.imports.forEach(function(it){ if (it && it.name) byName[it.name] = it; });
+      imports = Object.keys(byName).map(function(k){ return byName[k]; });
+    }
+    filter = settings.defaultFilter || 'all'; query = '';
+    document.getElementById('q').value = '';
+    saveAll(); render(); alert('配置已导入');
+  };
+  r.readAsText(f, 'utf-8');
+}
+function resetOverlay(){
+  if (!confirm('清除本机编辑，回到 manifest.js 基线？\n\n将重置主题、卡片编辑与展示设置；隐藏项和手动导入项保留。')) return;
+  overlay = {}; settings = {};
+  for (var p in DEF_SET) settings[p] = DEF_SET[p];
+  topics = initTopics(); filter = 'all'; query = '';
+  document.getElementById('q').value = '';
+  saveAll(); render();
+}
+function clearImports(){
+  if (!imports.length) return;
+  if (!confirm('清空本机浏览器里 ' + imports.length + ' 条手动导入记录？（不影响 manifest.js）')) return;
+  imports = []; saveAll(); render();
+}
+
+/* ---------- 导入理解物 HTML ---------- */
+function parseHtml(name, text){
+  var title = name.replace(/\.(html?|htm)$/i, '');
+  var m = text.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (m){ title = m[1].replace(/<[^>]+>/g,'').replace(/（v\d+[^）]*）/g,'').trim() || title; }
+  var d = text.match(/一句话总结<\/strong>：([\s\S]*?)<\/p>/i)
+       || text.match(/<blockquote>([\s\S]*?)<\/blockquote>/i);
+  var desc = d ? d[1].replace(/<[^>]+>/g,'').trim() : '本地导入的理解物。';
+  var mods = (text.match(/<details[^>]*class="mod"/g) || []).length;
+  var meta = mods ? mods + ' 个疑问模块 · 四层折叠' : '本地导入 · 四层折叠';
+  return {file:'', title:title, desc:desc, meta:meta, topicLabel:'手动导入', content:text, name:name};
+}
+function ingest(files){
+  var todo = Array.prototype.slice.call(files).filter(function(f){ return /\.html?$/i.test(f.name); });
+  if (!todo.length){ alert('未发现 .html 文件'); return; }
+  var done = 0;
+  todo.forEach(function(f){
+    var r = new FileReader();
+    r.onload = function(){
+      var item = parseHtml(f.name, String(r.result));
+      imports = imports.filter(function(x){ return x.name !== item.name; });
+      imports.push(item);
+      if (topics.map(function(t){return t.name;}).indexOf('手动导入') < 0){
+        topics.push({name:'手动导入', color:topics.length % PALETTE.length});
+      }
+      if (++done === todo.length){ saveAll(); render(); alert('已导入 ' + todo.length + ' 个理解物'); }
+    };
+    r.readAsText(f, 'utf-8');
+  });
+}
+
+/* ---------- 事件绑定 ---------- */
+document.getElementById('fileInput').addEventListener('change', function(e){ ingest(e.target.files); this.value=''; });
+document.getElementById('dirInput').addEventListener('change', function(e){ ingest(e.target.files); this.value=''; });
+document.getElementById('cfgInput') && document.getElementById('cfgInput').addEventListener('change', function(e){ importConfig(e.target.files); this.value=''; });
+document.getElementById('q').addEventListener('input', function(e){ query = e.target.value; render(); });
+document.getElementById('bar').addEventListener('click', function(e){
+  if (e.target.tagName !== 'BUTTON') return;
+  filter = e.target.getAttribute('data-t'); render();
+});
+document.getElementById('grid').addEventListener('click', function(e){
+  var el = e.target, o = el.getAttribute('data-i'), ed = el.getAttribute('data-e'), d = el.getAttribute('data-d');
+  if (o !== null) openCard(parseInt(o,10));
+  else if (ed !== null) openModal(parseInt(ed,10));
+  else if (d !== null) delItem(parseInt(d,10));
+});
+document.getElementById('mgmtBody').addEventListener('change', function(e){
+  var el = e.target;
+  function idx(attr){ var v = el.getAttribute(attr); return v === null ? -1 : parseInt(v,10); }
+  var i;
+  if ((i = idx('data-tn')) >= 0) return retitleTopic(i);
+  if ((i = idx('data-tc')) >= 0){ topics[i].color = parseInt(el.value,10); saveKey(K_TOP, topics); render(); return; }
+});
+document.getElementById('mgmtBody').addEventListener('click', function(e){
+  var el = e.target, v;
+  function idx(attr){ var s = el.getAttribute(attr); return s === null ? -1 : parseInt(s,10); }
+  var i;
+  if ((i = idx('data-tu')) >= 0) return moveTopic(i,-1);
+  if ((i = idx('data-td')) >= 0) return moveTopic(i,1);
+  if ((i = idx('data-tx')) >= 0) return delTopic(i);
+  if ((i = idx('data-iu')) >= 0){ if (i>0){ var t=imports[i]; imports[i]=imports[i-1]; imports[i-1]=t; saveAll(); render(); } return; }
+  if ((i = idx('data-id')) >= 0){ if (i<imports.length-1){ var t=imports[i]; imports[i]=imports[i+1]; imports[i+1]=t; saveAll(); render(); } return; }
+});
+document.getElementById('modal').addEventListener('click', function(e){ if (e.target === this) closeModal(); });
+
+filter = settings.defaultFilter || 'all';
+render();
+</script>
+</body>
+</html>
